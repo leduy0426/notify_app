@@ -5,9 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "scheme": "notifyapp",
     "ios": {
       "supportsTablet": true
+    },
+    "android": {
+      "userInterfaceStyle": "light"
     }
   }
 }
+
 

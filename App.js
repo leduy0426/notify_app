@@ -88,7 +88,8 @@ export default function App() {
           title: 'Thông báo',
           body: textToSend,
           data: { name: textToSend },
-          sound: true,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: null, // Gửi ngay lập tức
       });
