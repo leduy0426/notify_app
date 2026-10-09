@@ -1,0 +1,9 @@
+assets/
+node_modules/
+.git/
+.expo/
+.claude/
+docs/
+plan.md
+AGENTS.md
+LICENSE
