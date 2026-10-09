@@ -50,7 +50,7 @@ export default function App() {
     // Đăng ký cấp quyền và kênh thông báo
     registerForPushNotificationsAsync();
 
-    // Lắng nghe phản hồi từ thông báo khi người dùng nhấn vào
+    // Lắng nghe phản hồi từ thông báo khi người dùng nhấn vào (Foreground / Background)
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const nameFromNotification = extractNameFromNotification(response);
       if (nameFromNotification) {
@@ -58,16 +58,32 @@ export default function App() {
       }
     });
 
-    // Kiểm tra thông báo cold start khi ứng dụng vừa khởi chạy từ thông báo
-    Notifications.getLastNotificationResponseAsync().then(response => {
-      const nameFromNotification = extractNameFromNotification(response);
-      if (nameFromNotification) {
-        setInputText(nameFromNotification);
+    // Hàm kiểm tra thông báo cold start với cơ chế retry (đặc trị cho trễ Native Bridge trên Android)
+    const checkColdStartNotification = async () => {
+      try {
+        const response = await Notifications.getLastNotificationResponseAsync();
+        const nameFromNotification = extractNameFromNotification(response);
+        if (nameFromNotification) {
+          setInputText(nameFromNotification);
+        }
+      } catch (error) {
+        // Ignored
       }
-    });
+    };
+
+    // Kiểm tra ngay khi mount
+    checkColdStartNotification();
+
+    // Trì hoãn kiểm tra lại sau 300ms, 800ms và 1500ms để chờ Native Bridge khởi tạo xong
+    const timer1 = setTimeout(checkColdStartNotification, 300);
+    const timer2 = setTimeout(checkColdStartNotification, 800);
+    const timer3 = setTimeout(checkColdStartNotification, 1500);
 
     return () => {
       subscription.remove();
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
     };
   }, []);
 
