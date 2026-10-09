@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   SafeAreaView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
@@ -25,28 +27,43 @@ Notifications.setNotificationHandler({
 export default function App() {
   // Yêu cầu 3: Thoát ứng dụng vào lại sẽ để basic là "Name"
   const [inputText, setInputText] = useState('Name');
-  const responseListener = useRef(null);
+
+  // Hook phản hồi thông báo mới nhất từ expo-notifications
+  const lastNotificationResponse = Notifications.useLastNotificationResponse();
+
+  // Yêu cầu 4: Bấm vào thông báo sẽ mở ứng dụng với tên đã nhập
+  useEffect(() => {
+    if (
+      lastNotificationResponse &&
+      lastNotificationResponse.notification &&
+      lastNotificationResponse.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
+    ) {
+      const content = lastNotificationResponse.notification.request.content;
+      const nameFromNotification = content.data?.name || content.body;
+      if (nameFromNotification) {
+        setInputText(nameFromNotification);
+      }
+    }
+  }, [lastNotificationResponse]);
 
   useEffect(() => {
     // Đăng ký cấp quyền và kênh thông báo
     registerForPushNotificationsAsync();
 
-    // Yêu cầu 4: Lắng nghe sự kiện người dùng bấm vào thông báo khi app đang chạy hoặc ở background
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      const nameFromNotification =
-        response.notification.request.content.data?.name ||
-        response.notification.request.content.body;
+    // Lắng nghe phản hồi từ thông báo khi người dùng nhấn vào
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const content = response.notification.request.content;
+      const nameFromNotification = content.data?.name || content.body;
       if (nameFromNotification) {
         setInputText(nameFromNotification);
       }
     });
 
-    // Yêu cầu 4: Xử lý trường hợp ứng dụng mở từ trạng thái bị đóng hẳn (cold start) bằng cách chạm thông báo
+    // Kiểm tra thông báo cold start
     Notifications.getLastNotificationResponseAsync().then(response => {
       if (response && response.notification) {
-        const nameFromNotification =
-          response.notification.request.content.data?.name ||
-          response.notification.request.content.body;
+        const content = response.notification.request.content;
+        const nameFromNotification = content.data?.name || content.body;
         if (nameFromNotification) {
           setInputText(nameFromNotification);
         }
@@ -54,14 +71,15 @@ export default function App() {
     });
 
     return () => {
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
-      }
+      subscription.remove();
     };
   }, []);
 
   // Yêu cầu 2: Bấm vào nút sẽ bắn thông báo với nội dung nhập ở input text
   const handleSendNotification = async () => {
+    // Tắt bàn phím khi bấm nút Notify
+    Keyboard.dismiss();
+
     const textToSend = inputText.trim() || 'Name';
 
     try {
@@ -80,41 +98,43 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        <View style={styles.card}>
-          <Text style={styles.title}>Notify App 🔔</Text>
-          <Text style={styles.subtitle}>
-            Nhập tên/nội dung bên dưới và bấm nút "Notify" để nhận thông báo.
-          </Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="dark" />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+        >
+          <View style={styles.card}>
+            <Text style={styles.title}>Notify App 🔔</Text>
+            <Text style={styles.subtitle}>
+              Nhập tên/nội dung bên dưới và bấm nút "Notify" để nhận thông báo.
+            </Text>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Nội dung / Tên:</Text>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Nhập tên hoặc nội dung..."
-              placeholderTextColor="#999"
-              autoCapitalize="words"
-            />
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Nội dung / Tên:</Text>
+              <TextInput
+                style={styles.input}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Nhập tên hoặc nội dung..."
+                placeholderTextColor="#999"
+                autoCapitalize="words"
+              />
+            </View>
+
+            {/* Yêu cầu 1: Xây dựng button là notify */}
+            <TouchableOpacity
+              style={styles.button}
+              activeOpacity={0.8}
+              onPress={handleSendNotification}
+            >
+              <Text style={styles.buttonText}>Notify</Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Yêu cầu 1: Xây dựng button là notify */}
-          <TouchableOpacity
-            style={styles.button}
-            activeOpacity={0.8}
-            onPress={handleSendNotification}
-          >
-            <Text style={styles.buttonText}>Notify</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -213,4 +233,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
 
