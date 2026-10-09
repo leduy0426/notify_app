@@ -31,18 +31,18 @@ export default function App() {
   // Hook phản hồi thông báo mới nhất từ expo-notifications
   const lastNotificationResponse = Notifications.useLastNotificationResponse();
 
+  // Hàm hỗ trợ bóc tách tên/nội dung từ thông báo
+  const extractNameFromNotification = (response) => {
+    if (!response || !response.notification) return null;
+    const content = response.notification.request.content;
+    return content?.data?.name || content?.body || null;
+  };
+
   // Yêu cầu 4: Bấm vào thông báo sẽ mở ứng dụng với tên đã nhập
   useEffect(() => {
-    if (
-      lastNotificationResponse &&
-      lastNotificationResponse.notification &&
-      lastNotificationResponse.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
-    ) {
-      const content = lastNotificationResponse.notification.request.content;
-      const nameFromNotification = content.data?.name || content.body;
-      if (nameFromNotification) {
-        setInputText(nameFromNotification);
-      }
+    const nameFromNotification = extractNameFromNotification(lastNotificationResponse);
+    if (nameFromNotification) {
+      setInputText(nameFromNotification);
     }
   }, [lastNotificationResponse]);
 
@@ -52,21 +52,17 @@ export default function App() {
 
     // Lắng nghe phản hồi từ thông báo khi người dùng nhấn vào
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
-      const content = response.notification.request.content;
-      const nameFromNotification = content.data?.name || content.body;
+      const nameFromNotification = extractNameFromNotification(response);
       if (nameFromNotification) {
         setInputText(nameFromNotification);
       }
     });
 
-    // Kiểm tra thông báo cold start
+    // Kiểm tra thông báo cold start khi ứng dụng vừa khởi chạy từ thông báo
     Notifications.getLastNotificationResponseAsync().then(response => {
-      if (response && response.notification) {
-        const content = response.notification.request.content;
-        const nameFromNotification = content.data?.name || content.body;
-        if (nameFromNotification) {
-          setInputText(nameFromNotification);
-        }
+      const nameFromNotification = extractNameFromNotification(response);
+      if (nameFromNotification) {
+        setInputText(nameFromNotification);
       }
     });
 
