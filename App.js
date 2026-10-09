@@ -95,43 +95,45 @@ export default function App() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="dark" />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
-          <View style={styles.card}>
-            <Text style={styles.title}>Notify App 🔔</Text>
-            <Text style={styles.subtitle}>
-              Nhập tên/nội dung bên dưới và bấm nút "Notify" để nhận thông báo.
-            </Text>
+    <View style={{ flex: 1 }}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar style="dark" />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.container}
+          >
+            <View style={styles.card}>
+              <Text style={styles.title}>Notify App 🔔</Text>
+              <Text style={styles.subtitle}>
+                Nhập tên/nội dung bên dưới và bấm nút "Notify" để nhận thông báo.
+              </Text>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Nội dung / Tên:</Text>
-              <TextInput
-                style={styles.input}
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder="Nhập tên hoặc nội dung..."
-                placeholderTextColor="#999"
-                autoCapitalize="words"
-              />
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Nội dung / Tên:</Text>
+                <TextInput
+                  style={styles.input}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  placeholder="Nhập tên hoặc nội dung..."
+                  placeholderTextColor="#999"
+                  autoCapitalize="words"
+                />
+              </View>
+
+              {/* Yêu cầu 1: Xây dựng button là notify */}
+              <TouchableOpacity
+                style={styles.button}
+                activeOpacity={0.8}
+                onPress={handleSendNotification}
+              >
+                <Text style={styles.buttonText}>Notify</Text>
+              </TouchableOpacity>
             </View>
-
-            {/* Yêu cầu 1: Xây dựng button là notify */}
-            <TouchableOpacity
-              style={styles.button}
-              activeOpacity={0.8}
-              onPress={handleSendNotification}
-            >
-              <Text style={styles.buttonText}>Notify</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </View>
   );
 }
 
